@@ -26,12 +26,37 @@ The parameter $H$ is still the average number of hours of work reported by stude
 
 Review the Cardinal Virtues which serve as our guide for data science. Under Justice, is this model predictive or causal? What would the Preceptor Table look like? Write down the mathematical model we are using.
 
+```{r}
+
+fit_obj <- stan_glm(data = qscores, 
+                    refresh = 0, 
+                    formula = hours ~ 1)
+
+fit_obj
+
+```
 
 
 ## Scene 2
 
 **Prompt:** Create a plot of the posterior probability distribution for $H$. Interpret the plot. 
 
+```{r}
+
+fit_obj %>%
+  as_tibble() %>%
+  rename(mu = `(Intercept)`) %>%
+  ggplot(aes(x = mu)) +
+    geom_histogram(aes(y = after_stat(count / sum(count))),
+                       bins = 30,
+                       color = "white") +
+    labs(title = "Posterior Probability Distribution",
+         subtitle = "Average Time Committment of Harvard Classes",
+         x = "Time in Hours",
+         y = "Probability") +
+    theme_classic()
+
+```
 
 
 
@@ -41,12 +66,41 @@ Review the Cardinal Virtues which serve as our guide for data science. Under Jus
 
 What do the rows and columns mean in the matrix returned by `posterior_predict()` mean?
 
+```{r}
+
+pp <- posterior_predict(fit_obj)
+
+pp
+
+```
 
 Define D as the number of hours difference between the workload of two randomly selected courses. What is the 90% confidence interval within which the difference should fall?  
+
+```{r}
+
+course_diff <- tibble(course_1 = pp[, 1],
+                      course_2 = pp[, 2]) %>%
+  mutate(diff = course_1 - course_2)
+
+quantile(course_diff$diff, probs = c(0.05, 0.95))
+
+```
 
 
 What is your posterior probability distribution for D? 
 
+```{r}
 
+course_diff %>%
+  ggplot(aes(x = diff)) +
+    geom_histogram(aes(y = after_stat(count / sum(count))),
+                       bins = 30,
+                       color = "white") +
+    labs(title = "Posterior Probability Distribution",
+         subtitle = "Average Difference Between Time Committments of Harvard Classes",
+         x = "Difference in Hours",
+         y = "Probability") +
+    theme_classic()
 
+```
 
